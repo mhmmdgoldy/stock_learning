@@ -1,0 +1,16 @@
+streamlit
+forex-python
+CurrencyConverter
+streamlit-option-menu
+yfinance
+plotly
+pandas
+numpy
+matplotlib
+requests
+finnhub-python
+alpha_vantage
+curl_cffi
+hissa
+blacklitterman
+scikit-learn
