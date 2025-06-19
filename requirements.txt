@@ -8,5 +8,4 @@ numpy
 matplotlib
 requests
 curl_cffi
-blacklitterman
 scikit-learn
