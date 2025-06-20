@@ -135,7 +135,12 @@ elif selected == tr('Stock Overview'):
                 'SGX': 'Asia/Singapore',  # Singapore
                 'BSE': 'Asia/Kolkata',    # Bombay
                 'NSE': 'Asia/Kolkata',    # National Stock Exchange India
-                # Add more as needed
+                'BME': 'Europe/Madrid',   # Madrid Stock Exchange
+                'MEX': 'America/Mexico_City', # Mexican Stock Exchange
+                'STO': 'Europe/Stockholm', # Stockholm Stock Exchange
+                'SWX': 'Europe/Zurich', # Swiss Stock Exchange
+                'TPE': 'Asia/Taipei', # Taipei Stock Exchange
+            # Add more as needed
             }
             exchange = info.get('exchange', '').upper()
             return exchange_tz_map.get(exchange, 'UTC')
