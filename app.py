@@ -114,7 +114,38 @@ elif selected == tr('Stock Overview'):
     if data_dict:
         # Plot chart
         fig = go.Figure()
+        import pytz
+        def get_exchange_timezone(info):
+            # Map exchange codes to timezones
+            exchange_tz_map = {
+                'JK': 'Asia/Jakarta',     # Indonesia Stock Exchange
+                'NMS': 'America/New_York',# NASDAQ
+                'NYQ': 'America/New_York',# NYSE
+                'ASE': 'America/New_York',# AMEX
+                'LSE': 'Europe/London',   # London Stock Exchange
+                'TSE': 'Asia/Tokyo',      # Tokyo Stock Exchange
+                'HKG': 'Asia/Hong_Kong',  # Hong Kong
+                'SHH': 'Asia/Shanghai',   # Shanghai
+                'SHE': 'Asia/Shanghai',   # Shenzhen
+                'FRA': 'Europe/Berlin',   # Frankfurt
+                'MIL': 'Europe/Rome',     # Milan
+                'PAR': 'Europe/Paris',    # Paris
+                'TOR': 'America/Toronto', # Toronto
+                'AS': 'Europe/Amsterdam', # Amsterdam
+                'SGX': 'Asia/Singapore',  # Singapore
+                'BSE': 'Asia/Kolkata',    # Bombay
+                'NSE': 'Asia/Kolkata',    # National Stock Exchange India
+                # Add more as needed
+            }
+            exchange = info.get('exchange', '').upper()
+            return exchange_tz_map.get(exchange, 'UTC')
         for t, data in data_dict.items():
+            info = info_dict.get(t, {})
+            tz = get_exchange_timezone(info)
+            if data.index.tz is None:
+                data.index = data.index.tz_localize('UTC').tz_convert(tz)
+            else:
+                data.index = data.index.tz_convert(tz)
             if chart_type == 'Line':
                 fig.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name=f'{t} Close'))
             else:
