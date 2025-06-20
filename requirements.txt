@@ -9,3 +9,4 @@ matplotlib
 requests
 curl_cffi
 scikit-learn
+pytz
