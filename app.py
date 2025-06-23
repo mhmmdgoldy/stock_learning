@@ -100,6 +100,18 @@ elif selected == tr('Stock Overview'):
 
     import yfinance as yf
     import pandas as pd
+        # --- Caching functions to avoid rate limiting ---
+    @st.cache_data(ttl=3600, show_spinner=False)
+    def get_stock_data(ticker, period, interval, start=None, end=None):
+        if start and end:
+            return yf.download(ticker, start=start, end=end, interval=interval)
+        else:
+            return yf.download(ticker, period=period, interval=interval)
+
+    @st.cache_data(ttl=3600, show_spinner=False)
+    def get_stock_info(ticker):
+        return yf.Ticker(ticker).info
+    
     tickers = [t for t in [ticker1, ticker2] if t]
     data_dict = {}
     info_dict = {}
@@ -108,10 +120,10 @@ elif selected == tr('Stock Overview'):
             if use_custom_range and start_date and end_date:
                 start_dt = datetime.datetime.combine(start_date, datetime.time(0, 0))
                 end_dt = datetime.datetime.combine(end_date, datetime.time(23, 59))
-                data = yf.download(tickers=t, start=start_dt, end=end_dt, interval=interval)
+                data = get_stock_data(t, None, interval, start=start_dt, end=end_dt)
             else:
                 yf_period = period_map.get(data_range, '1mo')
-                data = yf.download(tickers=t, period=yf_period, interval=interval)
+                data = get_stock_data(t, yf_period, interval)
             if data.empty:
                 st.warning(f'No data found for {t} for this ticker/interval/range.')
                 continue
@@ -124,7 +136,7 @@ elif selected == tr('Stock Overview'):
             if 'Volume' in data.columns:
                 data['Volume'] = pd.to_numeric(data['Volume'].astype(str).str.replace(',', ''), errors='coerce')
             data_dict[t] = data
-            info_dict[t] = yf.Ticker(t).info
+            info_dict[t] = get_stock_info(t)
         except Exception as e:
             st.warning(f'Error fetching data for {t}: {e}')
 
