@@ -120,6 +120,7 @@ elif selected == tr('Stock Overview'):
 
     import yfinance as yf
     import pandas as pd
+    
     tickers = [t for t in [ticker1, ticker2] if t]
     data_dict = {}
     info_dict = {}
