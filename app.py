@@ -21,6 +21,23 @@ if 'currency' not in st.session_state:
     st.session_state['currency'] = list(CURRENCIES.keys())[0]
 language = st.sidebar.selectbox(tr('Language'), list(languages.keys()), index=list(languages.keys()).index(st.session_state['language']), key='language')
 currency = st.sidebar.selectbox(tr('Currency'), list(CURRENCIES.keys()), index=list(CURRENCIES.keys()).index(st.session_state['currency']), key='currency')
+
+# --- Timezone selection ---
+timezone_choices = {
+    'Jakarta (UTC+7)': 'Asia/Jakarta',
+    'New York (UTC-4/5)': 'America/New_York',
+    'London (UTC+1/0)': 'Europe/London',
+    'Zurich (UTC+2/1)': 'Europe/Zurich',
+    'Tokyo (UTC+9)': 'Asia/Tokyo',
+    'Shanghai (UTC+8)': 'Asia/Shanghai',
+    'Hong Kong (UTC+8)': 'Asia/Hong_Kong',
+    'Singapore (UTC+8)': 'Asia/Singapore',
+    'Kolkata (UTC+5:30)': 'Asia/Kolkata',
+    'Sydney (UTC+10)': 'Australia/Sydney',
+    'UTC': 'UTC',
+}
+timezone_label = st.sidebar.selectbox('Chart Timezone', list(timezone_choices.keys()), index=list(timezone_choices.keys()).index('Jakarta (UTC+7)'))
+selected_timezone = timezone_choices[timezone_label]
 set_language(languages[st.session_state['language']])
 
 # --- Navigation Bar ---
@@ -115,42 +132,12 @@ elif selected == tr('Stock Overview'):
         # Plot chart
         fig = go.Figure()
         import pytz
-        def get_exchange_timezone(info):
-            # Map exchange codes to timezones
-            exchange_tz_map = {
-                'JK': 'Asia/Jakarta',     # Indonesia Stock Exchange
-                'NMS': 'America/New_York',# NASDAQ
-                'NYQ': 'America/New_York',# NYSE
-                'ASE': 'America/New_York',# AMEX
-                'LSE': 'Europe/London',   # London Stock Exchange
-                'TSE': 'Asia/Tokyo',      # Tokyo Stock Exchange
-                'HKG': 'Asia/Hong_Kong',  # Hong Kong
-                'SHH': 'Asia/Shanghai',   # Shanghai
-                'SHE': 'Asia/Shanghai',   # Shenzhen
-                'FRA': 'Europe/Berlin',   # Frankfurt
-                'MIL': 'Europe/Rome',     # Milan
-                'PAR': 'Europe/Paris',    # Paris
-                'TOR': 'America/Toronto', # Toronto
-                'AS': 'Europe/Amsterdam', # Amsterdam
-                'SGX': 'Asia/Singapore',  # Singapore
-                'BSE': 'Asia/Kolkata',    # Bombay
-                'NSE': 'Asia/Kolkata',    # National Stock Exchange India
-                'BME': 'Europe/Madrid',   # Madrid Stock Exchange
-                'MEX': 'America/Mexico_City', # Mexican Stock Exchange
-                'STO': 'Europe/Stockholm', # Stockholm Stock Exchange
-                'SWX': 'Europe/Zurich', # Swiss Stock Exchange
-                'TPE': 'Asia/Taipei', # Taipei Stock Exchange
-            # Add more as needed
-            }
-            exchange = info.get('exchange', '').upper()
-            return exchange_tz_map.get(exchange, 'UTC')
+        # Use user-selected timezone for all charts
         for t, data in data_dict.items():
-            info = info_dict.get(t, {})
-            tz = get_exchange_timezone(info)
             if data.index.tz is None:
-                data.index = data.index.tz_localize('UTC').tz_convert(tz)
+                data.index = data.index.tz_localize('UTC').tz_convert(selected_timezone)
             else:
-                data.index = data.index.tz_convert(tz)
+                data.index = data.index.tz_convert(selected_timezone)
             if chart_type == 'Line':
                 fig.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name=f'{t} Close'))
             else:
