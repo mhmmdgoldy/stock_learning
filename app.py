@@ -7,6 +7,26 @@ import datetime
 import requests
 import plotly.graph_objs as go
 
+import yfinance as yf
+
+# --- Caching functions to avoid rate limiting ---
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_stock_data(ticker, period, interval, start=None, end=None):
+    if start and end:
+        return yf.download(ticker, start=start, end=end, interval=interval)
+    else:
+        return yf.download(ticker, period=period, interval=interval)
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_stock_info(ticker):
+    return yf.Ticker(ticker).info
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_income_stmt(ticker):
+    try:
+        return yf.Ticker(ticker).get_income_stmt()
+    except Exception:
+        return None
 
 # --- Language and Currency Dictionaries ---
 from i18n import tr, set_language
@@ -108,10 +128,10 @@ elif selected == tr('Stock Overview'):
             if use_custom_range and start_date and end_date:
                 start_dt = datetime.datetime.combine(start_date, datetime.time(0, 0))
                 end_dt = datetime.datetime.combine(end_date, datetime.time(23, 59))
-                data = yf.download(tickers=t, start=start_dt, end=end_dt, interval=interval)
+                data = get_stock_data(t, None, interval, start=start_dt, end=end_dt)
             else:
                 yf_period = period_map.get(data_range, '1mo')
-                data = yf.download(tickers=t, period=yf_period, interval=interval)
+                data = get_stock_data(t, yf_period, interval)
             if data.empty:
                 st.warning(f'No data found for {t} for this ticker/interval/range.')
                 continue
@@ -124,7 +144,7 @@ elif selected == tr('Stock Overview'):
             if 'Volume' in data.columns:
                 data['Volume'] = pd.to_numeric(data['Volume'].astype(str).str.replace(',', ''), errors='coerce')
             data_dict[t] = data
-            info_dict[t] = yf.Ticker(t).info
+            info_dict[t] = get_stock_info(t)
         except Exception as e:
             st.warning(f'Error fetching data for {t}: {e}')
 
@@ -229,9 +249,8 @@ elif selected == tr('Fundamental Overview'):
     st.info(tr('View all available fundamental metrics for a stock.'))
     ticker = st.text_input(tr('Stock Ticker for Fundamentals'), value='AAPL', max_chars=10)
     if ticker:
-        import yfinance as yf
         try:
-            info = yf.Ticker(ticker).info
+            info = get_stock_info(ticker)
             fundamentals = {
                 'Market Cap': info.get('marketCap'),
                 'IPO': info.get('ipoExpectedDate', info.get('ipoDate', 'N/A')),
@@ -274,13 +293,12 @@ elif selected == tr('Fundamental Overview'):
                 'Short % of Shares Outstanding': info.get('shortPercentOfSharesOutstanding'),
                 'Short % of Float': info.get('sharesShortPreviousMonthDate'),
             }
-            import pandas as pd
             # Try to extract Interest Income and Interest Income Ratio
             interest_income_val = None
             total_revenue_val = None
             interest_income_ratio_str = "N/A"
             try:
-                income_stmt = yf.Ticker(ticker).get_income_stmt()
+                income_stmt = get_income_stmt(ticker)
                 if isinstance(income_stmt, pd.DataFrame):
                     for key in ['Interest Income', 'InterestIncome', 'Total Interest Income']:
                         if key in income_stmt.index:
@@ -351,7 +369,7 @@ elif selected == tr('Syaria Stock Overview'):
     import pandas as pd
     if syaria_ticker:
         try:
-            info = yf.Ticker(syaria_ticker).info
+            info = get_stock_info(syaria_ticker)
             # Validate info
             if not info or not info.get('sector') or not info.get('shortName'):
                 st.warning('Could not retrieve company data for this ticker. Please check the ticker symbol.')
@@ -394,7 +412,7 @@ elif selected == tr('Syaria Stock Overview'):
             interest_income_val = None
             total_revenue_val = None
             try:
-                income_stmt = yf.Ticker(syaria_ticker).get_income_stmt()
+                income_stmt = get_income_stmt(syaria_ticker)
                 if isinstance(income_stmt, pd.DataFrame):
                     # Try common variants for interest income
                     for key in ['Interest Income', 'InterestIncome', 'Total Interest Income']:
@@ -505,7 +523,7 @@ elif selected == tr('Analysis'):
                 weights = []
     with result_col:
         try:
-            data = yf.download(tickers, period=period, interval='1d', group_by='ticker', auto_adjust=True, progress=False)
+            data = get_stock_data(tickers, period, '1d')
             # Filter out invalid tickers (no data or all-NaN)
             valid_tickers = []
             for t in tickers:
@@ -577,7 +595,7 @@ elif selected == tr('Analysis'):
                 market_caps = []
                 for t in tickers:
                     try:
-                        cap = yf.Ticker(t).info.get('marketCap', None)
+                        cap = get_stock_info(t).get('marketCap', None)
                         market_caps.append(cap if cap is not None else 1)
                     except Exception:
                         market_caps.append(1)
