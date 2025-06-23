@@ -1,7 +1,7 @@
 streamlit
 CurrencyConverter
 streamlit-option-menu
-yfinance==2.57
+yfinance==0.2.57
 plotly
 pandas
 numpy
