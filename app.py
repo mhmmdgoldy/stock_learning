@@ -22,6 +22,24 @@ if 'currency' not in st.session_state:
 language = st.sidebar.selectbox(tr('Language'), list(languages.keys()), index=list(languages.keys()).index(st.session_state['language']), key='language')
 currency = st.sidebar.selectbox(tr('Currency'), list(CURRENCIES.keys()), index=list(CURRENCIES.keys()).index(st.session_state['currency']), key='currency')
 
+# --- Timezone selection ---
+timezone_choices = {
+    'Jakarta (UTC+7)': 'Asia/Jakarta',
+    'New York (UTC-4/5)': 'America/New_York',
+    'London (UTC+1/0)': 'Europe/London',
+    'Zurich (UTC+2/1)': 'Europe/Zurich',
+    'Tokyo (UTC+9)': 'Asia/Tokyo',
+    'Shanghai (UTC+8)': 'Asia/Shanghai',
+    'Hong Kong (UTC+8)': 'Asia/Hong_Kong',
+    'Singapore (UTC+8)': 'Asia/Singapore',
+    'Kolkata (UTC+5:30)': 'Asia/Kolkata',
+    'Sydney (UTC+10)': 'Australia/Sydney',
+    'UTC': 'UTC',
+}
+timezone_label = st.sidebar.selectbox('Chart Timezone', list(timezone_choices.keys()), index=list(timezone_choices.keys()).index('Jakarta (UTC+7)'))
+selected_timezone = timezone_choices[timezone_label]
+set_language(languages[st.session_state['language']])
+
 # --- Navigation Bar ---
 selected = option_menu(
     menu_title=None,
