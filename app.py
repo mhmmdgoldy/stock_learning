@@ -11,6 +11,7 @@ import plotly.graph_objs as go
 # --- Language and Currency Dictionaries ---
 from i18n import tr, set_language
 from currency import set_currency, get_currency, CURRENCIES, convert, currency_symbol
+from analysis import aco_optimize_sharpe
 
 languages = {'English': 'en', 'Bahasa Indonesia': 'id'}
 
@@ -90,7 +91,7 @@ elif selected == tr('Stock Overview'):
     valid_periods = interval_valid_periods.get(interval, default_periods)
     data_range = st.selectbox(tr('Range'), valid_periods)
     period_map = {p: p for p in valid_periods}
-    indicator = st.selectbox(tr('Indicator'), ['None', 'Volume', 'SMA', 'EMA', 'RSI'])
+    indicator = st.selectbox(tr('Indicator'), ['None', 'Volume', 'SMA (Simple Moving Average)', 'EMA (Exponential Moving Average)', 'RSI (Relative Strength Index)'])
     use_custom_range = st.checkbox(tr('Use custom date range'))
     import datetime
     today = datetime.date.today()
@@ -148,13 +149,13 @@ elif selected == tr('Stock Overview'):
                 if indicator == 'Volume':
                     fig.add_trace(go.Bar(x=data.index, y=data['Volume'], name=f'{t} Volume', yaxis='y2'))
                     fig.update_layout(yaxis2=dict(overlaying='y', side='right', title='Volume'))
-                elif indicator == 'SMA':
+                elif indicator == 'SMA (Simple Moving Average)':
                     sma = data['Close'].rolling(window=20).mean()
                     fig.add_trace(go.Scatter(x=data.index, y=sma, mode='lines', name=f'{t} SMA 20'))
-                elif indicator == 'EMA':
+                elif indicator == 'EMA (Exponential Moving Average)':
                     ema = data['Close'].ewm(span=20, adjust=False).mean()
                     fig.add_trace(go.Scatter(x=data.index, y=ema, mode='lines', name=f'{t} EMA 20'))
-                elif indicator == 'RSI':
+                elif indicator == 'RSI (Relative Strength Index)':
                     delta = data['Close'].diff()
                     gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
                     loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
@@ -490,13 +491,17 @@ elif selected == tr('Analysis'):
     st.subheader(tr('Portfolio Formation Tool'))
     input_col, result_col = st.columns([1, 2])
     with input_col:
-        method = st.selectbox(tr('Portfolio Construction Method'), ['Manual Weights', 'Minimum Variance', 'Maximum Sharpe Ratio', 'Hierarchical Risk Parity (HRP)', 'Heuristic (ERC)', 'Black-Litterman'])
+        method = st.selectbox(tr('Portfolio Construction Method'), ['Manual Weights', 'Minimum Variance', 'Maximum Sharpe Ratio', 'Hierarchical Risk Parity (HRP)', 'Heuristic (ERC)', 'Black-Litterman', 'Ant Colony Optimization (ACO)'])
         period = st.selectbox(tr('Historical Data Period'), ['1mo', '6mo', '1y', '3y', '5y', 'max'], index=2)
         rf_input = st.number_input(tr('Risk-free rate (annual, %)'), value=4.46, min_value=0.0, max_value=20.0, step=0.1, format="%.2f")
         rf = rf_input / 100.0
         tickers_input = st.text_input(tr('Enter stock tickers (comma separated)'), value='AAPL,MSFT,GOOGL')
         tickers = [t.strip().upper() for t in tickers_input.split(',') if t.strip()]
         weights = []
+
+        # --- defaults ACO: selalu didefinisikan ---
+        aco_cfg = {"n_ants": 60,"n_iter": 200,"rho": 0.30,"alpha0": 60.0,"top_frac": 0.25,"seed": 42,}
+
         if method == 'Manual Weights':
             weights_input = st.text_input(tr('Enter weights (comma separated, must sum to 1)'), value='0.4,0.3,0.3')
             try:
@@ -587,6 +592,33 @@ elif selected == tr('Analysis'):
                 else:
                     w = np.repeat(1/len(tickers), len(tickers))
                 st.caption('Future version: allow custom user views for Black-Litterman.')
+            elif method == 'Ant Colony Optimization (ACO)':
+                with st.expander('ACO Settings (Advanced)', expanded=False):
+                    aco_cfg["n_ants"]  = st.number_input('Ants per iteration', min_value=10,  max_value=500,  value=aco_cfg["n_ants"],  step=10)
+                    aco_cfg["n_iter"]  = st.number_input('Iterations',        min_value=10,  max_value=3000, value=aco_cfg["n_iter"],  step=10)
+                    aco_cfg["rho"]     = st.slider      ('Pheromone evaporation (rho)', 0.05, 0.90, aco_cfg["rho"], 0.05)
+                    aco_cfg["alpha0"]  = st.number_input('Dirichlet concentration (alpha0)', min_value=1.0, max_value=500.0, value=aco_cfg["alpha0"], step=1.0)
+                    # Optional:
+                    aco_cfg["top_frac"] = st.slider('Top-ant fraction', 0.05, 0.50, aco_cfg["top_frac"], 0.05)
+                    aco_cfg["seed"]     = st.number_input('Random seed', min_value=0, max_value=10_000, value=aco_cfg["seed"], step=1)
+
+                # ACO untuk memaksimalkan Sharpe Ratio
+                with st.spinner('Running Ant Colony Optimization...'):
+                    w, best_sharpe = aco_optimize_sharpe(
+                        mean_returns, cov_matrix, rf,
+                        n_ants = int(aco_cfg["n_ants"]),
+                        n_iter = int(aco_cfg["n_iter"]),
+                        rho = float(aco_cfg["rho"]),
+                        alpha0 = float(aco_cfg["alpha0"]),
+                        top_frac = float(aco_cfg["top_frac"]),
+                        seed = int(aco_cfg["seed"]),
+                    )
+
+                # Stats portofolio dari bobot terbaik
+                port_return = np.dot(w, mean_returns)
+                port_vol = np.sqrt(np.dot(w, np.dot(cov_matrix, w)))
+                sharpe = (port_return - rf) / port_vol if port_vol > 0 else np.nan
+
             # Portfolio stats
             port_return = np.dot(w, mean_returns)
             port_vol = np.sqrt(np.dot(w, np.dot(cov_matrix, w)))
