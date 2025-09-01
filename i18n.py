@@ -14,7 +14,7 @@ T = {
     'Stock data visualization (line/candlestick)': {'en': 'Stock data visualization (line/candlestick)', 'id': 'Visualisasi data saham (line/candlestick)'},
     'Fundamental metrics': {'en': 'Fundamental metrics', 'id': 'Metrik fundamental'},
     'Sharia (Syariah) stock screening': {'en': 'Sharia (Syariah) stock screening', 'id': 'Penyaringan saham Syariah'},
-    'Portfolio analysis (Hybrid Heuristic, Black-Litterman, Min-Var)': {'en': 'Portfolio analysis (Hybrid Heuristic, Black-Litterman, Min-Var)', 'id': 'Analisis portofolio (Heuristik Hibrida, Black-Litterman, Min-Var)'},
+    'Portfolio analysis (Classic and Hybrid)': {'en': 'Portfolio analysis (Classic and Hybrid)', 'id': 'Analisis portofolio (Klasik dan Hibrida)'},
     # Syariah Table
     'Business Activity': {'en': 'Business Activity', 'id': 'Aktivitas Bisnis'},
     'Non-halal revenue < 10%': {'en': 'Non-halal revenue < 10%', 'id': 'Pendapatan non-halal < 10%'},
@@ -115,6 +115,21 @@ T = {
     'Dropped invalid tickers:': {'en': 'Dropped invalid tickers:', 'id': 'Kode saham tidak valid dihapus:'},
     'No valid tickers with price data. Please check your input.': {'en': 'No valid tickers with price data. Please check your input.', 'id': 'Tidak ada kode saham valid dengan data harga. Mohon cek input Anda.'},
     'Could not fetch data or calculate portfolio:': {'en': 'Could not fetch data or calculate portfolio:', 'id': 'Tidak dapat mengambil data atau menghitung portofolio:'},
+    # ACO Settings
+    'ACO Settings (Advanced)': {'en': 'ACO Settings (Advanced)', 'id': 'Pengaturan ACO (Lanjutan)'},
+    'Ants per iteration': {'en': 'Ants per iteration', 'id': 'Jumlah semut per iterasi'},
+    'Iterations': {'en': 'Iterations', 'id': 'Jumlah iterasi'},
+    'Pheromone evaporation (rho)': {'en': 'Pheromone evaporation (rho)', 'id': 'Evaporasi feromon (rho)'},
+    'Dirichlet concentration (alpha0)': {'en': 'Dirichlet concentration (alpha0)', 'id': 'Konsentrasi Dirichlet (alpha0)'},
+    'Top-ant fraction': {'en': 'Top-ant fraction', 'id': 'Fraksi semut terbaik'},
+    'Random seed': {'en': 'Random seed', 'id': 'Seed acak'},
+    #About
+    'About Us': {'en': 'About Us', 'id': 'Tentang Kami'},
+    'This Project brought to you by:': {'en': 'This Project brought to you by:', 'id': 'Proyek ini dibawa kepada Anda oleh:'},
+    'Department of Mathematics Education': {'en': 'Department of Mathematics Education', 'id': 'Departemen Pendidikan Matematika'},
+    'Universitas Negeri Yogyakarta': {'en': 'Universitas Negeri Yogyakarta', 'id': 'Universitas Negeri Yogyakarta'},
+    'Build with Python Streamlit': {'en': 'Build with Python Streamlit', 'id': 'Dibangun dengan Python Streamlit'},
+
     # General
     'Language': {'en': 'Language', 'id': 'Bahasa'},
     'Currency': {'en': 'Currency', 'id': 'Mata Uang'},
