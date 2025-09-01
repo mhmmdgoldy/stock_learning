@@ -8,11 +8,12 @@ import requests
 import plotly.graph_objs as go
 
 
-# --- Language and Currency Dictionaries ---
+# --- Local Library Dictionaries ---
 from i18n import tr, set_language
 from currency import set_currency, get_currency, CURRENCIES, convert, currency_symbol
 from analysis import aco_optimize_sharpe
 from about import about_page
+from homepage import homepage_content
 
 languages = {'English': 'en', 'Bahasa Indonesia': 'id'}
 
@@ -49,16 +50,6 @@ selected = option_menu(
     icons=['house', 'bar-chart', 'table', 'check2-circle', 'graph-up', 'info-circle'],
     orientation='horizontal',
 )
-
-# --- Homepage Content ---
-def homepage_content():
-    st.title(tr('Homepage'))
-    st.markdown(tr('Welcome to the Finance Webapp!'))
-    st.markdown(tr('This website provides:'))
-    st.markdown('- ' + tr('Stock data visualization (line/candlestick)'))
-    st.markdown('- ' + tr('Fundamental metrics'))
-    st.markdown('- ' + tr('Sharia (Syariah) stock screening'))
-    st.markdown('- ' + tr('Portfolio analysis (Classic and Hybrid)'))
 
 # --- Main Routing ---
 if selected == tr('Homepage'):
