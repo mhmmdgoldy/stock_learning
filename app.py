@@ -594,13 +594,13 @@ elif selected == tr('Analysis'):
                 st.caption('Future version: allow custom user views for Black-Litterman.')
             elif method == 'Ant Colony Optimization (ACO)':
                 with st.expander('ACO Settings (Advanced)', expanded=False):
-                    aco_cfg["n_ants"]  = st.number_input('Ants per iteration', min_value=10,  max_value=500,  value=aco_cfg["n_ants"],  step=10)
-                    aco_cfg["n_iter"]  = st.number_input('Iterations',        min_value=10,  max_value=3000, value=aco_cfg["n_iter"],  step=10)
-                    aco_cfg["rho"]     = st.slider      ('Pheromone evaporation (rho)', 0.05, 0.90, aco_cfg["rho"], 0.05)
-                    aco_cfg["alpha0"]  = st.number_input('Dirichlet concentration (alpha0)', min_value=1.0, max_value=500.0, value=aco_cfg["alpha0"], step=1.0)
+                    aco_cfg["n_ants"]  = st.number_input(tr('Ants per iteration'), min_value=10,  max_value=500,  value=aco_cfg["n_ants"],  step=10)
+                    aco_cfg["n_iter"]  = st.number_input(tr('Iterations'),        min_value=10,  max_value=3000, value=aco_cfg["n_iter"],  step=10)
+                    aco_cfg["rho"]     = st.slider      (tr('Pheromone evaporation (rho)'), 0.05, 0.90, aco_cfg["rho"], 0.05)
+                    aco_cfg["alpha0"]  = st.number_input(tr('Dirichlet concentration (alpha0)'), min_value=1.0, max_value=500.0, value=aco_cfg["alpha0"], step=1.0)
                     # Optional:
-                    aco_cfg["top_frac"] = st.slider('Top-ant fraction', 0.05, 0.50, aco_cfg["top_frac"], 0.05)
-                    aco_cfg["seed"]     = st.number_input('Random seed', min_value=0, max_value=10_000, value=aco_cfg["seed"], step=1)
+                    aco_cfg["top_frac"] = st.slider(tr('Top-ant fraction'), 0.05, 0.50, aco_cfg["top_frac"], 0.05)
+                    aco_cfg["seed"]     = st.number_input(tr('Random seed'), min_value=0, max_value=10_000, value=aco_cfg["seed"], step=1)
 
                 # ACO untuk memaksimalkan Sharpe Ratio
                 with st.spinner('Running Ant Colony Optimization...'):
