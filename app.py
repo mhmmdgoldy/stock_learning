@@ -12,6 +12,7 @@ import plotly.graph_objs as go
 from i18n import tr, set_language
 from currency import set_currency, get_currency, CURRENCIES, convert, currency_symbol
 from analysis import aco_optimize_sharpe
+from about import about_page
 
 languages = {'English': 'en', 'Bahasa Indonesia': 'id'}
 
@@ -44,8 +45,8 @@ set_language(languages[st.session_state['language']])
 # --- Navigation Bar ---
 selected = option_menu(
     menu_title=None,
-    options=[tr('Homepage'), tr('Stock Overview'), tr('Fundamental Overview'), tr('Syaria Stock Overview'), tr('Analysis')],
-    icons=['house', 'bar-chart', 'table', 'check2-circle', 'graph-up'],
+    options=[tr('Homepage'), tr('Stock Overview'), tr('Fundamental Overview'), tr('Syaria Stock Overview'), tr('Analysis'), tr('About Us')],
+    icons=['house', 'bar-chart', 'table', 'check2-circle', 'graph-up', 'info-circle'],
     orientation='horizontal',
 )
 
@@ -57,7 +58,7 @@ def homepage_content():
     st.markdown('- ' + tr('Stock data visualization (line/candlestick)'))
     st.markdown('- ' + tr('Fundamental metrics'))
     st.markdown('- ' + tr('Sharia (Syariah) stock screening'))
-    st.markdown('- ' + tr('Portfolio analysis (Hybrid Heuristic, Black-Litterman, Min-Var)'))
+    st.markdown('- ' + tr('Portfolio analysis (Classic and Hybrid)'))
 
 # --- Main Routing ---
 if selected == tr('Homepage'):
@@ -635,3 +636,5 @@ elif selected == tr('Analysis'):
             st.warning(f'Could not fetch data or calculate portfolio: {e}')
         st.caption(tr('This tool uses historical data and allows several portfolio construction methods: Manual Weights, Min-Var, Max Sharpe, HRP.'))
 
+elif selected == tr("About Us"):
+    about_page()
