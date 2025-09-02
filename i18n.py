@@ -110,7 +110,7 @@ T = {
     'Expected annual volatility:': {'en': 'Expected annual volatility:', 'id': 'Ekspektasi volatilitas tahunan:'},
     'Sharpe Ratio (risk-free rate': {'en': 'Sharpe Ratio (risk-free rate', 'id': 'Rasio Sharpe (tingkat bebas risiko'},
     'Portfolio Allocation': {'en': 'Portfolio Allocation', 'id': 'Alokasi Portofolio'},
-    'This tool uses historical data and allows several portfolio construction methods: Manual Weights, Min-Var, Max Sharpe, HRP.': {'en': 'This tool uses historical data and allows several portfolio construction methods: Manual Weights, Min-Var, Max Sharpe, HRP.', 'id': 'Alat ini menggunakan data historis dan mendukung berbagai metode pembentukan portofolio: Manual, Min-Var, Max Sharpe, HRP.'},
+    'This tool uses historical data and allows several portfolio construction methods: Classic and Hybrid.': {'en': 'This tool uses historical data and allows several portfolio construction methods: Classic and Hybrid.', 'id': 'Alat ini menggunakan data historis dan mendukung berbagai metode pembentukan portofolio: Classic dan Hybrid.'},
     'Number of tickers and weights must match, and weights must sum to 1.': {'en': 'Number of tickers and weights must match, and weights must sum to 1.', 'id': 'Jumlah saham dan bobot harus sama, dan bobot harus berjumlah 1.'},
     'Dropped invalid tickers:': {'en': 'Dropped invalid tickers:', 'id': 'Kode saham tidak valid dihapus:'},
     'No valid tickers with price data. Please check your input.': {'en': 'No valid tickers with price data. Please check your input.', 'id': 'Tidak ada kode saham valid dengan data harga. Mohon cek input Anda.'},

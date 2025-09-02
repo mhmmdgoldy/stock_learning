@@ -29,8 +29,8 @@ def about_page():
         <div style="text-align: center;">
             <h3>{tr('Department of Mathematics Education')}<br>{tr('Universitas Negeri Yogyakarta')}</h3>
             <p style="margin: 0;">Jl. Colombo No.1 Karangmalang Yogyakarta 55281</p>
-            <p style="margin: 0;">Email: humas_fmipa@uny.ac.id</p>
-            <p style="margin: 20px 0 0 0;">{tr('Build with Python Streamlit')}<br>Copyright © 2025 Tim Proyek Website Departemen Pendidikan Matematika</p>
+            <p style="margin: 0;">Email: Retnosubekti@uny.ac.id, muhammdgoldy@gmail.com</p>
+            <p style="margin: 20px 0 0 0;">{tr('Build with Python Streamlit')}<br>Copyright © 2025 Tim Riset Website Departemen Pendidikan Matematika</p>
             <p style="margin: 8px 0 0 0;">Dr. Retno Subekti, S.Si., M.Sc.</p>
             <p style="margin: 0px 0 0 0;">Dr. Eminugroho Ratna Sari, S.Si., M.Sc.</p>
             <p style="margin: 0px 0 0 0;">Rizky Nur'aini, S.Stat., M.Stat.</p>

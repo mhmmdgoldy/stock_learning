@@ -625,7 +625,7 @@ elif selected == tr('Analysis'):
             st.plotly_chart(fig)
         except Exception as e:
             st.warning(f'Could not fetch data or calculate portfolio: {e}')
-        st.caption(tr('This tool uses historical data and allows several portfolio construction methods: Manual Weights, Min-Var, Max Sharpe, HRP.'))
+        st.caption(tr('This tool uses historical data and allows several portfolio construction methods: Classic and Hybrid.'))
 
 elif selected == tr("About Us"):
     about_page()
