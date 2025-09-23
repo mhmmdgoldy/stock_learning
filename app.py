@@ -479,6 +479,67 @@ elif selected == tr('Analysis'):
     import pandas as pd
     import numpy as np
     import plotly.graph_objs as go
+    from scipy.optimize import minimize
+
+    # ==== Helpers for Analysis (compare mode) ====
+
+    def eval_portfolio(weights, mean_returns, cov_matrix, rf):
+        w = np.asarray(weights)
+        mu = float(np.dot(w, mean_returns))
+        vol = float(np.sqrt(np.dot(w, cov_matrix @ w)))
+        sharpe = (mu - rf) / vol if vol > 0 else np.nan
+        return mu, vol, sharpe
+
+    def solve_min_var(cov_matrix):
+        n = cov_matrix.shape[0]
+        w0 = np.repeat(1/n, n)
+        bounds = [(0,1)] * n
+        cons = [{'type': 'eq', 'fun': lambda w: np.sum(w) - 1}]
+        def obj(w): return np.sqrt(np.dot(w, cov_matrix @ w))
+        res = minimize(obj, w0, bounds=bounds, constraints=cons)
+        return res.x if res.success else w0
+
+    def solve_max_sharpe(mean_returns, cov_matrix, rf):
+        n = cov_matrix.shape[0]
+        w0 = np.repeat(1/n, n)
+        bounds = [(0,1)] * n
+        cons = [{'type': 'eq', 'fun': lambda w: np.sum(w) - 1}]
+        def neg_sharpe(w):
+            mu = np.dot(w, mean_returns); vol = np.sqrt(np.dot(w, cov_matrix @ w))
+            return - (mu - rf) / vol if vol > 0 else 1e9
+        res = minimize(neg_sharpe, w0, bounds=bounds, constraints=cons)
+        return res.x if res.success else w0
+
+    def solve_erc(cov_matrix, iters=400, lr=0.01):
+        n = cov_matrix.shape[0]
+        w = np.repeat(1/n, n)
+        for _ in range(iters):
+            rc = w * (cov_matrix @ w)
+            target = rc.sum() / n
+            grad = (rc - target)
+            w = np.clip(w - lr * grad, 0, 1)
+            s = w.sum()
+            w = np.repeat(1/n, n) if s == 0 else (w / s)
+        return w
+
+    def solve_equal_weight(n):  # HRP placeholder
+        return np.repeat(1/n, n)
+
+    # Jika Anda sudah punya ACO di aco.py, siapkan import-nya:
+    try:
+        from aco import aco_optimize_sharpe
+    except Exception:
+        aco_optimize_sharpe = None
+
+    # Siapkan daftar metode yang bisa dibandingkan
+    ALL_METHODS = [
+        "Minimum Variance",
+        "Maximum Sharpe Ratio",
+        "Heuristic (ERC)",
+        "Hierarchical Risk Parity (HRP)",  # placeholder = equal weight
+        "Black-Litterman",
+        "Ant Colony Optimization (ACO)"
+    ]
 
     st.subheader(tr('Portfolio Formation Tool'))
     input_col, result_col = st.columns([1, 2])
@@ -490,6 +551,16 @@ elif selected == tr('Analysis'):
         tickers_input = st.text_input(tr('Enter stock tickers (comma separated)'), value='AAPL,MSFT,GOOGL')
         tickers = [t.strip().upper() for t in tickers_input.split(',') if t.strip()]
         weights = []
+
+        # === Compare mode controls ===
+        compare_mode = st.checkbox(tr('Compare multiple methods'))
+        methods_to_compare = []
+        if compare_mode:
+            methods_to_compare = st.multiselect(
+                tr('Select methods to compare'),
+                ALL_METHODS,
+                default=["Minimum Variance", "Maximum Sharpe Ratio", "Heuristic (ERC)"]
+            )
 
         # --- defaults ACO: selalu didefinisikan ---
         aco_cfg = {"n_ants": 60,"n_iter": 200,"rho": 0.30,"alpha0": 60.0,"top_frac": 0.25,"seed": 42,}
@@ -522,6 +593,92 @@ elif selected == tr('Analysis'):
             returns = pd.DataFrame({t: data[t]['Close'].pct_change().dropna() for t in tickers})
             mean_returns = returns.mean() * 252
             cov_matrix = returns.cov() * 252
+            
+            # === Compare mode execution (place BEFORE single-method branch) ===
+            if compare_mode and methods_to_compare:
+                results = []
+                weight_maps = {}
+
+                for m in methods_to_compare:
+                    # hitung bobot sesuai metode
+                    if m == "Minimum Variance":
+                        w_m = solve_min_var(cov_matrix)
+                    elif m == "Maximum Sharpe Ratio":
+                        w_m = solve_max_sharpe(mean_returns, cov_matrix, rf)
+                    elif m == "Heuristic (ERC)":
+                        w_m = solve_erc(cov_matrix)
+                    elif m == "Hierarchical Risk Parity (HRP)":
+                        w_m = solve_equal_weight(len(mean_returns))  # placeholder
+                    elif m == "Black-Litterman":
+                        # gunakan pipeline BL sederhana Anda (market cap prior) sebagai fallback
+                        try:
+                            caps = []
+                            for t in tickers:
+                                try:
+                                    cap = yf.Ticker(t).info.get('marketCap', None)
+                                    caps.append(cap if cap is not None else 1)
+                                except Exception:
+                                    caps.append(1)
+                            caps = np.array(caps, dtype=float)
+                            w_m = caps / caps.sum() if caps.sum() > 0 else solve_equal_weight(len(mean_returns))
+                        except Exception:
+                            w_m = solve_equal_weight(len(mean_returns))
+                    elif m == "Ant Colony Optimization (ACO)":
+                        if aco_optimize_sharpe is not None:
+                            w_m, _ = aco_optimize_sharpe(mean_returns, cov_matrix, rf,
+                                                        n_ants=60, n_iter=200, rho=0.30, alpha0=60.0,
+                                                        top_frac=0.25, seed=42)
+                        else:
+                            w_m = solve_max_sharpe(mean_returns, cov_matrix, rf)  # fallback wajar
+                    else:
+                        w_m = solve_equal_weight(len(mean_returns))
+
+                    mu, vol, sh = eval_portfolio(w_m, mean_returns, cov_matrix, rf)
+                    results.append({"Method": m, "Return": mu, "Volatility": vol, "Sharpe": sh})
+                    weight_maps[m] = pd.Series(w_m, index=tickers)
+
+                # Tabel hasil
+                df_res = pd.DataFrame(results).sort_values("Sharpe", ascending=False)
+                st.subheader(tr('Comparison'))
+                st.dataframe(df_res.style.format({"Return":"{:.2%}", "Volatility":"{:.2%}", "Sharpe":"{:.2f}"}),
+                            use_container_width=True)
+
+                # Grafik batang Sharpe
+                fig_cmp = go.Figure()
+                fig_cmp.add_bar(x=df_res["Method"], y=df_res["Sharpe"])
+                fig_cmp.update_layout(title=tr('Sharpe Ratio by Method'),
+                                    xaxis_title=tr('Method'), yaxis_title=tr('Sharpe'))
+                st.plotly_chart(fig_cmp, use_container_width=True)
+
+                # Pie allocation untuk 3 metode teratas
+                st.caption(tr('Top 3 allocations'))
+                top_methods = df_res["Method"].head(3).tolist()
+                cols = st.columns(len(top_methods))
+                for col, m in zip(cols, top_methods):
+                    with col:
+                        s = weight_maps[m]
+                        s = s[s > 0].sort_values(ascending=False).head(10)
+                        fig_pie = go.Figure(data=[go.Pie(labels=s.index, values=s.values, hole=.35)])
+                        fig_pie.update_layout(title=m)
+                        st.plotly_chart(fig_pie, use_container_width=True)
+
+                # Tabel bobot untuk tiap metode (compare)
+                df_weights_all = pd.DataFrame({})
+
+                for m, s in weight_maps.items():
+                    df_weights_all[m] = s
+
+                # Ubah ke persen
+                df_weights_all = df_weights_all.applymap(lambda x: f"{x:.2%}")
+
+                df_weights_all.index.name = tr('Ticker')
+                st.subheader(tr('Portfolio Weights per Method'))
+                st.dataframe(df_weights_all, use_container_width=True)
+
+
+                st.stop()  # hentikan agar cabang single-method di bawah tidak dieksekusi saat compare
+
+
             # Portfolio optimization
             if method == 'Manual Weights':
                 valid = len(tickers) == len(weights) and np.isclose(sum(weights), 1.0)
@@ -623,6 +780,14 @@ elif selected == tr('Analysis'):
             fig = go.Figure(data=[go.Pie(labels=tickers, values=w, hole=.3)])
             fig.update_layout(title=tr('Portfolio Allocation'))
             st.plotly_chart(fig)
+            
+            df_weights = pd.DataFrame({
+                tr('Ticker'): tickers,
+                tr('Weight'): [f"{x:.2%}" for x in w]
+            })
+            st.subheader(tr('Portfolio Weights'))
+            st.table(df_weights)        
+
         except Exception as e:
             st.warning(f'Could not fetch data or calculate portfolio: {e}')
         st.caption(tr('This tool uses historical data and allows several portfolio construction methods: Classic and Hybrid.'))
