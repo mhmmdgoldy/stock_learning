@@ -115,6 +115,22 @@ T = {
     'Dropped invalid tickers:': {'en': 'Dropped invalid tickers:', 'id': 'Kode saham tidak valid dihapus:'},
     'No valid tickers with price data. Please check your input.': {'en': 'No valid tickers with price data. Please check your input.', 'id': 'Tidak ada kode saham valid dengan data harga. Mohon cek input Anda.'},
     'Could not fetch data or calculate portfolio:': {'en': 'Could not fetch data or calculate portfolio:', 'id': 'Tidak dapat mengambil data atau menghitung portofolio:'},
+
+    # Analisis (Belum di Track ke app.py)
+    'Compare multiple methods': {'en':'Compare multiple methods','id':'Bandingkan beberapa metode'},
+    'Select methods to compare': {'en':'Select methods to compare','id':'Pilih metode untuk dibandingkan'},
+    'Comparison': {'en':'Comparison','id':'Perbandingan'},
+    'Method': {'en':'Method','id':'Metode'},
+    'Return': {'en':'Return','id':'Imbal hasil'},
+    'Volatility': {'en':'Volatility','id':'Volatilitas'},
+    'Sharpe': {'en':'Sharpe','id':'Sharpe'},
+    'Top 3 allocations': {'en':'Top 3 allocations','id':'Tiga alokasi teratas'},
+    'Sharpe Ratio by Method': {'en':'Sharpe Ratio by Method','id':'Rasio Sharpe per Metode'},
+    'Ticker': {'en': 'Ticker', 'id': 'Kode Saham'},
+    'Weight': {'en': 'Weight', 'id': 'Bobot'},
+    'Portfolio Weights': {'en': 'Portfolio Weights', 'id': 'Bobot Portofolio'},
+    'Portfolio Weights per Method': {'en': 'Portfolio Weights per Method', 'id': 'Bobot Portofolio per Metode'},
+
     # ACO Settings
     'ACO Settings (Advanced)': {'en': 'ACO Settings (Advanced)', 'id': 'Pengaturan ACO (Lanjutan)'},
     'Ants per iteration': {'en': 'Ants per iteration', 'id': 'Jumlah semut per iterasi'},
