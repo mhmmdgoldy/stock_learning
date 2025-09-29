@@ -130,6 +130,25 @@ T = {
     'Weight': {'en': 'Weight', 'id': 'Bobot'},
     'Portfolio Weights': {'en': 'Portfolio Weights', 'id': 'Bobot Portofolio'},
     'Portfolio Weights per Method': {'en': 'Portfolio Weights per Method', 'id': 'Bobot Portofolio per Metode'},
+    'Use custom date range': {'en':'Use custom date range', 'id':'Gunakan rentang tanggal kustom'},
+    'Select date range': {'en':'Select date range', 'id':'Pilih rentang tanggal'},
+    'Invalid date range: start must be before end': {
+        'en':'Invalid date range: start must be before end',
+        'id':'Rentang tanggal tidak valid: tanggal mulai harus sebelum tanggal akhir'
+    },
+    'No data in selected date range. Please adjust the dates.': {
+        'en':'No data in selected date range. Please adjust the dates.',
+        'id':'Tidak ada data pada rentang tanggal yang dipilih. Silakan sesuaikan tanggal.'
+    },
+    'Please select both start and end dates': {
+        'en':'Please select both start and end dates',
+        'id':'Silakan pilih tanggal mulai dan tanggal akhir'
+    },
+    'End date beyond today. Data will be cut off at': {
+        'en':'End date beyond today. Data will be cut off at',
+        'id':'Tanggal akhir melewati hari ini. Data akan dipotong sampai'
+    },
+
 
     # ACO Settings
     'ACO Settings (Advanced)': {'en': 'ACO Settings (Advanced)', 'id': 'Pengaturan ACO (Lanjutan)'},
