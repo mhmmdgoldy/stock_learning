@@ -527,7 +527,7 @@ elif selected == tr('Analysis'):
 
     # Jika Anda sudah punya ACO di aco.py, siapkan import-nya:
     try:
-        from aco import aco_optimize_sharpe
+        from analysis import aco_optimize_sharpe
     except Exception:
         aco_optimize_sharpe = None
 
