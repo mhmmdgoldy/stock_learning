@@ -339,7 +339,7 @@ elif selected == tr('Syaria Stock Overview'):
     st.header(tr('Syaria Stock Overview'))
     st.info(tr('Check if a stock is Sharia (Syariah) compliant based on OJK/HISSA-like (HISSA) criteria, using Yahoo Finance data.'))
 
-    syaria_ticker = st.text_input(tr('Stock Ticker for Syaria Analysis'), value='AAPL', max_chars=10)
+    syaria_ticker = st.text_input(tr('Stock Ticker for Syaria Analysis'), value='TLKM.JK', max_chars=10)
     import yfinance as yf
     import pandas as pd
     if syaria_ticker:
