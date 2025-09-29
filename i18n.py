@@ -149,6 +149,37 @@ T = {
         'id':'Tanggal akhir melewati hari ini. Data akan dipotong sampai'
     },
 
+    #Treemap (Belum ditambahkan juga)
+    'Sector Treemap': {'en':'Sector Treemap','id':'Treemap Sektor'},
+    'Visualize one stock index grouped by sector.': {'en':'Visualize one stock index grouped by sector.','id':'Visualisasikan satu indeks saham yang dikelompokkan per sektor.'},
+    'Select index': {'en':'Select index','id':'Pilih indeks'},
+    'Tickers in index:': {'en':'Tickers in index:','id':'Ticker dalam indeks:'},
+    'Loading treemap...': {'en':'Loading treemap...','id':'Memuat treemap...'},
+    'Constituents snapshot': {'en':'Constituents snapshot','id':'Ringkasan konstituen'},
+    'Period:': {'en':'Period:','id':'Periode:'},
+    'Data range:': {'en':'Data range:','id':'Rentang data:'},
+    'Size = Market Cap, Color = Performance (green up, red down).': {'en':'Size = Market Cap, Color = Performance (green up, red down).','id':'Ukuran = Market Cap, Warna = Kinerja (hijau naik, merah turun).'},
+
+    'Some constituents have missing performance; shown as 0% due to limited data today.': {
+    'en': 'Some constituents have missing performance; shown as 0% due to limited data today.',
+    'id': 'Sebagian konstituen tidak memiliki data kinerja; ditampilkan 0% karena keterbatasan data hari ini.'
+    },
+    'No trading data in the selected window (likely weekend/holiday). The app tried a short fallback lookback but still found no data. Please adjust the dates.': {
+    'en': 'No trading data in the selected window (likely weekend/holiday). The app tried a short fallback lookback but still found no data. Please adjust the dates.',
+    'id': 'Tidak ada data perdagangan pada rentang yang dipilih (kemungkinan akhir pekan/libur). Aplikasi sudah mencoba mundur beberapa hari, namun tetap tidak ada data. Silakan sesuaikan tanggal.'
+    },
+    'No trading data in the selected date range (likely weekend/holiday). Please pick a range that includes trading days.': {
+    'en':'No trading data in the selected date range (likely weekend/holiday). Please pick a range that includes trading days.',
+    'id':'Tidak ada data perdagangan pada rentang tanggal yang dipilih (kemungkinan akhir pekan/libur). Pilih rentang yang memuat hari bursa.'
+    },
+    'Not enough trading days in the selected range to compute performance. Please expand the range.': {
+    'en':'Not enough trading days in the selected range to compute performance. Please expand the range.',
+    'id':'Hari bursa pada rentang tersebut tidak cukup untuk menghitung kinerja. Perluas rentang tanggal.'
+    },
+    'Unexpected error while building treemap.': {
+    'en':'Unexpected error while building treemap.',
+    'id':'Terjadi galat tak terduga saat membangun treemap.'
+    },
 
     # ACO Settings
     'ACO Settings (Advanced)': {'en': 'ACO Settings (Advanced)', 'id': 'Pengaturan ACO (Lanjutan)'},

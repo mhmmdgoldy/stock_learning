@@ -46,8 +46,8 @@ set_language(languages[st.session_state['language']])
 # --- Navigation Bar ---
 selected = option_menu(
     menu_title=None,
-    options=[tr('Homepage'), tr('Stock Overview'), tr('Fundamental Overview'), tr('Syaria Stock Overview'), tr('Analysis'), tr('About Us')],
-    icons=['house', 'bar-chart', 'table', 'check2-circle', 'graph-up', 'info-circle'],
+    options=[tr('Homepage'), tr('Stock Overview'), tr('Fundamental Overview'), tr('Syaria Stock Overview'), tr('Analysis'), tr('Sector Treemap'), tr('About Us')],
+    icons=['house', 'bar-chart', 'table', 'check2-circle', 'graph-up', 'grid', 'info-circle'],
     orientation='horizontal',
 )
 
@@ -844,6 +844,101 @@ elif selected == tr('Analysis'):
         except Exception as e:
             st.warning(f'Could not fetch data or calculate portfolio: {e}')
         st.caption(tr('This tool uses historical data and allows several portfolio construction methods: Classic and Hybrid.'))
+
+elif selected == tr('Sector Treemap'):
+    import pandas as pd
+    import streamlit as st
+    from treemap import build_sector_treemap
+
+    st.header(tr('Sector Treemap'))
+    st.info(tr('Visualize one stock index grouped by sector.'))
+
+    # --- Pilih indeks (contoh: subset LQ45 / S&P 100). Ganti/extend sesuai kebutuhan. ---
+    INDEX_MAP = {
+        "IDX LQ45 (example subset)": [
+            "BBCA.JK","BBRI.JK","BMRI.JK","BBNI.JK","ASII.JK","TLKM.JK",
+            "UNVR.JK","ICBP.JK","INDF.JK","UNTR.JK","HMSP.JK","SMGR.JK",
+            "INTP.JK","MDKA.JK","ANTM.JK","INCO.JK","ADRO.JK","PTBA.JK"
+        ],
+        "S&P 100 (example subset)": [
+            "AAPL","MSFT","GOOGL","AMZN","META","TSLA",
+            "BRK-B","JNJ","JPM","XOM","PG","NVDA","UNH","V","HD"
+        ],
+    }
+
+    # --- Panel input ---
+    left, right = st.columns([1,2])
+    with left:
+        index_choice = st.selectbox(tr('Select index'), list(INDEX_MAP.keys()))
+        use_custom_range = st.checkbox(tr('Use custom date range'))
+        # period default bila tidak custom
+        period = st.selectbox(tr('Historical Data Period'),
+                              ['1d','1w','1mo','3mo','6mo','1y','3y','5y','max'], index=4,
+                              disabled=use_custom_range)
+        # custom date range
+        today = pd.Timestamp.today().normalize()
+        default_start = today - pd.DateOffset(months=6)
+        start_date, end_date = None, None
+        if use_custom_range:
+            date_range = st.date_input(tr('Select date range'),
+                                       value=(default_start.date(), today.date()))
+            if isinstance(date_range, tuple) and len(date_range) == 2:
+                start_date, end_date = date_range
+                if start_date >= end_date:
+                    st.warning(tr('Invalid date range: start must be before end'))
+                    start_date, end_date = None, None
+                elif end_date > today.date():
+                    st.warning(f"{tr('End date beyond today. Data will be cut off at')} {today.date()}.")
+                    end_date = today.date()
+            else:
+                st.warning(tr('Please select both start and end dates'))
+
+        tickers_index = INDEX_MAP[index_choice]
+        st.caption(tr('Tickers in index:') + " " + ", ".join(tickers_index))
+
+    with right:
+        try:
+            with st.spinner(tr('Loading treemap...')):
+                if use_custom_range:
+                    if not start_date or not end_date:
+                        st.warning(tr('Please select both start and end dates'))
+                        st.stop()
+                    # custom range: TIDAK auto-adjust weekend → bila kosong, raise warning
+                    fig, df_meta = build_sector_treemap(
+                        tickers_index,
+                        start=pd.to_datetime(start_date),
+                        end=pd.to_datetime(end_date)
+                    )
+                    st.caption(tr('Data range:') + f" {start_date} → {end_date}")
+                    plot_key = f"treemap_custom_{index_choice}_{start_date}_{end_date}"
+                else:
+                    # preset: include_today=True agar data sampai hari ini (seperti Stock Overview)
+                    fig, df_meta = build_sector_treemap(
+                        tickers_index,
+                        period=period,
+                        include_today=True
+                    )
+                    st.caption(tr('Period:') + f" {period}")
+                    plot_key = f"treemap_period_{index_choice}_{period}"
+
+            st.plotly_chart(fig, use_container_width=True, key=plot_key)
+
+            st.subheader(tr('Constituents snapshot'))
+            show_df = df_meta.copy()
+            show_df["Perf"] = show_df["Perf"].map(lambda x: f"{x*100:.2f}%")
+            st.dataframe(show_df[["Ticker","Sector","MarketCap","Perf"]], use_container_width=True, key=f"df_{plot_key}")
+
+            st.caption(tr('Size = Market Cap, Color = Performance (green up, red down).'))
+
+        except ValueError as e:
+            msg = str(e)
+            if msg == "NO_TRADING_DATA":
+                st.warning(tr('No trading data in the selected date range (likely weekend/holiday). Please pick a range that includes trading days.'))
+            elif msg == "NOT_ENOUGH_TRADING_DAYS":
+                st.warning(tr('Not enough trading days in the selected range to compute performance. Please expand the range.'))
+            else:
+                st.error(tr('Unexpected error while building treemap.'))
+
 
 elif selected == tr("About Us"):
     about_page()
