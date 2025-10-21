@@ -46,8 +46,8 @@ set_language(languages[st.session_state['language']])
 # --- Navigation Bar ---
 selected = option_menu(
     menu_title=None,
-    options=[tr('Homepage'), tr('Stock Overview'), tr('Fundamental Overview'), tr('Syaria Stock Overview'), tr('Analysis'), tr('About Us')],
-    icons=['house', 'bar-chart', 'table', 'check2-circle', 'graph-up', 'info-circle'],
+    options=[tr('Homepage'), tr('Stock Overview'), tr('Fundamental Overview'), tr('Syaria Stock Overview'), tr('Analysis'), tr('Sector Treemap'), tr('About Us')],
+    icons=['house', 'bar-chart', 'table', 'check2-circle', 'graph-up', 'grid', 'info-circle'],
     orientation='horizontal',
 )
 
