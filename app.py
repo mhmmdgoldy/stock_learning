@@ -46,8 +46,8 @@ set_language(languages[st.session_state['language']])
 # --- Navigation Bar ---
 selected = option_menu(
     menu_title=None,
-    options=[tr('Homepage'), tr('Stock Overview'), tr('Fundamental Overview'), tr('Syaria Stock Overview'), tr('Analysis'), tr('Sector Treemap'), tr('About Us')],
-    icons=['house', 'bar-chart', 'table', 'check2-circle', 'graph-up', 'grid', 'info-circle'],
+    options=[tr('Homepage'), tr('Stock Overview'), tr('Fundamental Overview'), tr('Syaria Stock Overview'), tr('Analysis'), tr('About Us')],
+    icons=['house', 'bar-chart', 'table', 'check2-circle', 'graph-up', 'info-circle'],
     orientation='horizontal',
 )
 
@@ -339,7 +339,7 @@ elif selected == tr('Syaria Stock Overview'):
     st.header(tr('Syaria Stock Overview'))
     st.info(tr('Check if a stock is Sharia (Syariah) compliant based on OJK/HISSA-like (HISSA) criteria, using Yahoo Finance data.'))
 
-    syaria_ticker = st.text_input(tr('Stock Ticker for Syaria Analysis'), value='BRIS.JK', max_chars=10)
+    syaria_ticker = st.text_input(tr('Stock Ticker for Syaria Analysis'), value='AAPL', max_chars=10)
     import yfinance as yf
     import pandas as pd
     if syaria_ticker:
@@ -480,8 +480,12 @@ elif selected == tr('Analysis'):
     import numpy as np
     import plotly.graph_objs as go
     from scipy.optimize import minimize
+    import time
 
     # ==== Helpers for Analysis (compare mode) ====
+    def _ms(t0: float) -> float:
+        # Hitung elapsed time (ms) dari perf_counter start.
+        return (time.perf_counter() - t0) * 1000.0
 
     def eval_portfolio(weights, mean_returns, cov_matrix, rf):
         w = np.asarray(weights)
@@ -525,7 +529,7 @@ elif selected == tr('Analysis'):
     def solve_equal_weight(n):  # HRP placeholder
         return np.repeat(1/n, n)
 
-    # Jika Anda sudah punya ACO di aco.py, siapkan import-nya:
+    # Jika Anda sudah punya ACO di analysis.py, siapkan import-nya:
     try:
         from analysis import aco_optimize_sharpe
     except Exception:
@@ -545,35 +549,7 @@ elif selected == tr('Analysis'):
     input_col, result_col = st.columns([1, 2])
     with input_col:
         method = st.selectbox(tr('Portfolio Construction Method'), ['Manual Weights', 'Minimum Variance', 'Maximum Sharpe Ratio', 'Hierarchical Risk Parity (HRP)', 'Heuristic (ERC)', 'Black-Litterman', 'Ant Colony Optimization (ACO)'])
-        # === Preset period atau custom date range ===
-        use_custom_range = st.checkbox(tr('Use custom date range'))
-        today = pd.Timestamp.today().normalize()
-        default_start = today - pd.DateOffset(years=1)
-
-        start_date, end_date = None, None
-        if use_custom_range:
-            date_range = st.date_input(
-                tr('Select date range'),
-                value=(default_start.date(), today.date())
-            )
-
-            # date_input bisa return 1 date (jika user klik single) atau tuple
-            if isinstance(date_range, tuple) and len(date_range) == 2:
-                start_date, end_date = date_range
-                if start_date >= end_date:
-                    st.warning(tr('Invalid date range: start must be before end'))
-                    start_date, end_date = None, None
-                elif end_date > today.date():
-                    st.warning(f"{tr('End date beyond today. Data will be cut off at')} {today.date()}.")
-                    end_date = today.date()
-            else:
-                st.warning(tr('Please select both start and end dates'))
-        else:
-            period = st.selectbox(
-                tr('Historical Data Period'),
-                ['1mo','6mo','1y','3y','5y','max'],
-                index=2
-            )
+        period = st.selectbox(tr('Historical Data Period'), ['1mo', '6mo', '1y', '3y', '5y', 'max'], index=2)
         rf_input = st.number_input(tr('Risk-free rate (annual, %)'), value=4.46, min_value=0.0, max_value=20.0, step=0.1, format="%.2f")
         rf = rf_input / 100.0
         tickers_input = st.text_input(tr('Enter stock tickers (comma separated)'), value='AAPL,MSFT,GOOGL')
@@ -601,33 +577,8 @@ elif selected == tr('Analysis'):
                 weights = []
     with result_col:
         try:
-            if use_custom_range:
-                if not start_date or not end_date:
-                    st.stop()
-                data = yf.download(
-                    tickers,
-                    start=pd.to_datetime(start_date),
-                    end=pd.to_datetime(end_date) + pd.Timedelta(days=1),
-                    interval='1d',
-                    group_by='ticker',
-                    auto_adjust=True,
-                    progress=False
-                )
-            else:
-                data = yf.download(
-                    tickers,
-                    period=period,
-                    interval='1d',
-                    group_by='ticker',
-                    auto_adjust=True,
-                    progress=False
-                )
-            # Filter out invalid tickers (no data or all-NaN)
-            # Cek data ada isinya
-            if isinstance(data, pd.DataFrame) and data.empty:
-                st.error(tr('No data in selected date range. Please adjust the dates.'))
-                st.stop()
-
+            data = yf.download(tickers, period=period, interval='1d', group_by='ticker', auto_adjust=True, progress=False)
+        # Filter out invalid tickers (no data or all-NaN)
             valid_tickers = []
             for t in tickers:
                 try:
@@ -646,14 +597,16 @@ elif selected == tr('Analysis'):
             returns = pd.DataFrame({t: data[t]['Close'].pct_change().dropna() for t in tickers})
             mean_returns = returns.mean() * 252
             cov_matrix = returns.cov() * 252
+            opt_runtime_ms = 0.0
             
             # === Compare mode execution (place BEFORE single-method branch) ===
             if compare_mode and methods_to_compare:
                 results = []
                 weight_maps = {}
+                method_times = {}
 
                 for m in methods_to_compare:
-                    # hitung bobot sesuai metode
+                    t0 = time.perf_counter()  # mulai timer untuk metode m
                     if m == "Minimum Variance":
                         w_m = solve_min_var(cov_matrix)
                     elif m == "Maximum Sharpe Ratio":
@@ -661,9 +614,8 @@ elif selected == tr('Analysis'):
                     elif m == "Heuristic (ERC)":
                         w_m = solve_erc(cov_matrix)
                     elif m == "Hierarchical Risk Parity (HRP)":
-                        w_m = solve_equal_weight(len(mean_returns))  # placeholder
+                        w_m = solve_equal_weight(len(mean_returns))
                     elif m == "Black-Litterman":
-                        # gunakan pipeline BL sederhana Anda (market cap prior) sebagai fallback
                         try:
                             caps = []
                             for t in tickers:
@@ -682,19 +634,26 @@ elif selected == tr('Analysis'):
                                                         n_ants=60, n_iter=200, rho=0.30, alpha0=60.0,
                                                         top_frac=0.25, seed=42)
                         else:
-                            w_m = solve_max_sharpe(mean_returns, cov_matrix, rf)  # fallback wajar
+                            w_m = solve_max_sharpe(mean_returns, cov_matrix, rf)
                     else:
                         w_m = solve_equal_weight(len(mean_returns))
+                    runtime_ms = _ms(t0)    
+                    method_times[m] = runtime_ms 
 
                     mu, vol, sh = eval_portfolio(w_m, mean_returns, cov_matrix, rf)
-                    results.append({"Method": m, "Return": mu, "Volatility": vol, "Sharpe": sh})
+                    results.append({"Method": m, "Return": mu, "Volatility": vol, "Sharpe": sh,
+                                    "Runtime (ms)": runtime_ms})
                     weight_maps[m] = pd.Series(w_m, index=tickers)
 
                 # Tabel hasil
                 df_res = pd.DataFrame(results).sort_values("Sharpe", ascending=False)
                 st.subheader(tr('Comparison'))
-                st.dataframe(df_res.style.format({"Return":"{:.2%}", "Volatility":"{:.2%}", "Sharpe":"{:.2f}"}),
-                            use_container_width=True)
+                st.dataframe(
+                    df_res.style.format({
+                        "Return":"{:.2%}", "Volatility":"{:.2%}", "Sharpe":"{:.2f}", "Runtime (ms)":"{:.1f}"
+                    }),
+                    use_container_width=True
+                )
 
                 # Grafik batang Sharpe
                 fig_cmp = go.Figure()
@@ -728,19 +687,23 @@ elif selected == tr('Analysis'):
                 st.subheader(tr('Portfolio Weights per Method'))
                 st.dataframe(df_weights_all, use_container_width=True)
 
+                st.caption(tr('Timing note: runtimes shown are for portfolio construction only (data loading not included).'))
 
                 st.stop()  # hentikan agar cabang single-method di bawah tidak dieksekusi saat compare
 
 
             # Portfolio optimization
             if method == 'Manual Weights':
+                t0 = time.perf_counter()
                 valid = len(tickers) == len(weights) and np.isclose(sum(weights), 1.0)
                 if not valid:
                     st.warning('Number of tickers and weights must match, and weights must sum to 1.')
                     st.stop()
                 w = np.array(weights)
+                opt_runtime_ms = _ms(t0)
             elif method == 'Minimum Variance':
                 from scipy.optimize import minimize
+                t0 = time.perf_counter()
                 n = len(tickers)
                 def port_vol(w):
                     return np.sqrt(np.dot(w, np.dot(cov_matrix, w)))
@@ -749,8 +712,10 @@ elif selected == tr('Analysis'):
                 w0 = np.repeat(1/n, n)
                 opt = minimize(port_vol, w0, bounds=bounds, constraints=cons)
                 w = opt.x
+                opt_runtime_ms = _ms(t0)
             elif method == 'Maximum Sharpe Ratio':
                 from scipy.optimize import minimize
+                t0 = time.perf_counter()
                 n = len(tickers)
                 def neg_sharpe(w):
                     port_ret = np.dot(w, mean_returns)
@@ -761,13 +726,15 @@ elif selected == tr('Analysis'):
                 w0 = np.repeat(1/n, n)
                 opt = minimize(neg_sharpe, w0, bounds=bounds, constraints=cons)
                 w = opt.x
+                opt_runtime_ms = _ms(t0)
             elif method == 'Hierarchical Risk Parity (HRP)':
                 st.info('HRP is not yet implemented. Showing equal-weighted portfolio for now.')
+                t0 = time.perf_counter()
                 n = len(tickers)
                 w = np.repeat(1/n, n)
+                opt_runtime_ms = _ms(t0)
             elif method == 'Heuristic (ERC)':
-                # Equal Risk Contribution (ERC) heuristic
-                # Iterative approximation
+                t0 = time.perf_counter()
                 n = len(tickers)
                 w = np.repeat(1/n, n)
                 for _ in range(100):
@@ -778,9 +745,11 @@ elif selected == tr('Analysis'):
                     w -= 0.01 * grad
                     w = np.clip(w, 0, 1)
                     w /= w.sum()
+                opt_runtime_ms = _ms(t0)
                 st.info('Heuristic: Equal Risk Contribution (ERC) portfolio.')
             elif method == 'Black-Litterman':
                 st.info('Black-Litterman: using market cap weights as prior (no user views yet).')
+                t0 = time.perf_counter()
                 market_caps = []
                 for t in tickers:
                     try:
@@ -793,6 +762,7 @@ elif selected == tr('Analysis'):
                     w = market_caps / np.sum(market_caps)
                 else:
                     w = np.repeat(1/len(tickers), len(tickers))
+                opt_runtime_ms = _ms(t0)
                 st.caption('Future version: allow custom user views for Black-Litterman.')
             elif method == 'Ant Colony Optimization (ACO)':
                 with st.expander('ACO Settings (Advanced)', expanded=False):
@@ -806,15 +776,17 @@ elif selected == tr('Analysis'):
 
                 # ACO untuk memaksimalkan Sharpe Ratio
                 with st.spinner('Running Ant Colony Optimization...'):
+                    t0 = time.perf_counter()
                     w, best_sharpe = aco_optimize_sharpe(
                         mean_returns, cov_matrix, rf,
                         n_ants = int(aco_cfg["n_ants"]),
                         n_iter = int(aco_cfg["n_iter"]),
-                        rho = float(aco_cfg["rho"]),
+                        rho    = float(aco_cfg["rho"]),
                         alpha0 = float(aco_cfg["alpha0"]),
                         top_frac = float(aco_cfg["top_frac"]),
-                        seed = int(aco_cfg["seed"]),
+                        seed   = int(aco_cfg["seed"]),
                     )
+                    opt_runtime_ms = _ms(t0)
 
                 # Stats portofolio dari bobot terbaik
                 port_return = np.dot(w, mean_returns)
@@ -825,10 +797,13 @@ elif selected == tr('Analysis'):
             port_return = np.dot(w, mean_returns)
             port_vol = np.sqrt(np.dot(w, np.dot(cov_matrix, w)))
             sharpe = (port_return - rf) / port_vol if port_vol > 0 else np.nan
+
             # Show expected return and volatility as percentages, not currency
             st.success(f"{tr('Expected annual return:')} {port_return:.2%}")
             st.info(f"{tr('Expected annual volatility:')} {port_vol:.2%}")
             st.info(f"{tr('Sharpe Ratio (risk-free rate')} {rf_input:.2f}%): {sharpe:.2f}")
+            st.caption(f"{tr('Optimization runtime')}: {opt_runtime_ms:.1f} ms")
+
             # Pie chart of weights
             fig = go.Figure(data=[go.Pie(labels=tickers, values=w, hole=.3)])
             fig.update_layout(title=tr('Portfolio Allocation'))
@@ -938,7 +913,6 @@ elif selected == tr('Sector Treemap'):
                 st.warning(tr('Not enough trading days in the selected range to compute performance. Please expand the range.'))
             else:
                 st.error(tr('Unexpected error while building treemap.'))
-
 
 elif selected == tr("About Us"):
     about_page()

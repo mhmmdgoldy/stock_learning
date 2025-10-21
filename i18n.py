@@ -149,6 +149,14 @@ T = {
         'id':'Tanggal akhir melewati hari ini. Data akan dipotong sampai'
     },
 
+    'Optimization runtime': {'en':'Optimization runtime', 'id':'Waktu optimisasi'},
+    'Runtime (ms)': {'en':'Runtime (ms)', 'id':'Waktu jalan (ms)'},
+    'Timing note: runtimes shown are for portfolio construction only (data loading not included).': {
+    'en':'Timing note: runtimes shown are for portfolio construction only (data loading not included).',
+    'id':'Catatan waktu: runtime yang ditampilkan hanya untuk konstruksi portofolio (tidak termasuk pemuatan data).'
+    },
+
+
     #Treemap (Belum ditambahkan juga)
     'Sector Treemap': {'en':'Sector Treemap','id':'Treemap Sektor'},
     'Visualize one stock index grouped by sector.': {'en':'Visualize one stock index grouped by sector.','id':'Visualisasikan satu indeks saham yang dikelompokkan per sektor.'},
