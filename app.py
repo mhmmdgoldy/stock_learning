@@ -549,7 +549,35 @@ elif selected == tr('Analysis'):
     input_col, result_col = st.columns([1, 2])
     with input_col:
         method = st.selectbox(tr('Portfolio Construction Method'), ['Manual Weights', 'Minimum Variance', 'Maximum Sharpe Ratio', 'Hierarchical Risk Parity (HRP)', 'Heuristic (ERC)', 'Black-Litterman', 'Ant Colony Optimization (ACO)'])
-        period = st.selectbox(tr('Historical Data Period'), ['1mo', '6mo', '1y', '3y', '5y', 'max'], index=2)
+        # === Preset period atau custom date range ===
+        use_custom_range = st.checkbox(tr('Use custom date range'))
+        today = pd.Timestamp.today().normalize()
+        default_start = today - pd.DateOffset(years=1)
+
+        start_date, end_date = None, None
+        if use_custom_range:
+            date_range = st.date_input(
+                tr('Select date range'),
+                value=(default_start.date(), today.date())
+            )
+
+            # date_input bisa return 1 date (jika user klik single) atau tuple
+            if isinstance(date_range, tuple) and len(date_range) == 2:
+                start_date, end_date = date_range
+                if start_date >= end_date:
+                    st.warning(tr('Invalid date range: start must be before end'))
+                    start_date, end_date = None, None
+                elif end_date > today.date():
+                    st.warning(f"{tr('End date beyond today. Data will be cut off at')} {today.date()}.")
+                    end_date = today.date()
+            else:
+                st.warning(tr('Please select both start and end dates'))
+        else:
+            period = st.selectbox(
+                tr('Historical Data Period'),
+                ['1mo','6mo','1y','3y','5y','max'],
+                index=2
+            )
         rf_input = st.number_input(tr('Risk-free rate (annual, %)'), value=4.46, min_value=0.0, max_value=20.0, step=0.1, format="%.2f")
         rf = rf_input / 100.0
         tickers_input = st.text_input(tr('Enter stock tickers (comma separated)'), value='AAPL,MSFT,GOOGL')
@@ -577,7 +605,33 @@ elif selected == tr('Analysis'):
                 weights = []
     with result_col:
         try:
-            data = yf.download(tickers, period=period, interval='1d', group_by='ticker', auto_adjust=True, progress=False)
+            if use_custom_range:
+                if not start_date or not end_date:
+                    st.stop()
+                data = yf.download(
+                    tickers,
+                    start=pd.to_datetime(start_date),
+                    end=pd.to_datetime(end_date) + pd.Timedelta(days=1),
+                    interval='1d',
+                    group_by='ticker',
+                    auto_adjust=True,
+                    progress=False
+                )
+            else:
+                data = yf.download(
+                    tickers,
+                    period=period,
+                    interval='1d',
+                    group_by='ticker',
+                    auto_adjust=True,
+                    progress=False
+                )
+            # Filter out invalid tickers (no data or all-NaN)
+            # Cek data ada isinya
+            if isinstance(data, pd.DataFrame) and data.empty:
+                st.error(tr('No data in selected date range. Please adjust the dates.'))
+                st.stop()
+
         # Filter out invalid tickers (no data or all-NaN)
             valid_tickers = []
             for t in tickers:
