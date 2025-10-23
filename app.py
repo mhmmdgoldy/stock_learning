@@ -604,6 +604,7 @@ elif selected == tr('Analysis'):
             except Exception:
                 weights = []
     with result_col:
+
         try:
             if use_custom_range:
                 if not start_date or not end_date:
@@ -869,6 +870,61 @@ elif selected == tr('Analysis'):
             })
             st.subheader(tr('Portfolio Weights'))
             st.table(df_weights)        
+
+            returns = pd.DataFrame({t: data[t]['Close'].pct_change().dropna() for t in tickers})
+            mean_returns = returns.mean() * 252
+            cov_matrix   = returns.cov() * 252
+
+            # === Per-asset return statistics (daily & annualized) ===
+            st.subheader(tr('Per-asset return statistics'))
+
+            # Build stats from daily returns
+            _stats = returns[tickers].agg(['mean', 'var', 'min', 'max']).T
+            _stats.columns = [
+                tr('Mean (daily)'),
+                tr('Variance (daily)'),
+                tr('Min (daily return)'),
+                tr('Max (daily return)')
+            ]
+
+            # Annualized mean & variance (252 trading days)
+            _stats[tr('Mean (annualized)')]     = returns[tickers].mean() * 252
+            _stats[tr('Variance (annualized)')] = returns[tickers].var()  * 252
+
+            # Order columns
+            _stats = _stats[
+                [
+                    tr('Mean (daily)'),
+                    tr('Variance (daily)'),
+                    tr('Min (daily return)'),
+                    tr('Max (daily return)'),
+                    tr('Mean (annualized)'),
+                    tr('Variance (annualized)'),
+                ]
+            ]
+
+            # Nicely formatted table
+            st.dataframe(
+                _stats.style.format({
+                    tr('Mean (daily)'): "{:.2%}",
+                    tr('Variance (daily)'): "{:.4%}",
+                    tr('Min (daily return)'): "{:.2%}",
+                    tr('Max (daily return)'): "{:.2%}",
+                    tr('Mean (annualized)'): "{:.2%}",
+                    tr('Variance (annualized)'): "{:.4%}",
+                }),
+                use_container_width=True,
+                key=f"per_asset_stats_{'-'.join(tickers)}"
+            )
+
+            # Optional: download CSV for research
+            st.download_button(
+                label=tr('Download per-asset stats (CSV)'),
+                data=_stats.to_csv(index=True).encode('utf-8'),
+                file_name='per_asset_stats.csv',
+                mime='text/csv',
+                key=f"dl_per_asset_stats_{'-'.join(tickers)}"
+            )
 
         except Exception as e:
             st.warning(f'Could not fetch data or calculate portfolio: {e}')
