@@ -930,6 +930,102 @@ elif selected == tr('Analysis'):
             st.warning(f'Could not fetch data or calculate portfolio: {e}')
         st.caption(tr('This tool uses historical data and allows several portfolio construction methods: Classic and Hybrid.'))
 
+    # === Extended analysis data: vectors & matrices ===
+    st.subheader(tr('Analysis Data (vectors & matrices)'))
+
+    # Build artifacts
+    corr_matrix = returns.corr()
+    mean_vector = mean_returns.rename(tr('Mean (annualized)')).to_frame()
+    var_vector  = pd.Series(np.diag(cov_matrix.values), index=cov_matrix.index, name=tr('Variance (annualized)')).to_frame()
+
+    # Tabs for neat navigation
+    tab_vecs, tab_cov, tab_corr, tab_ret = st.tabs([
+        tr('Vectors'), tr('Covariance Matrix'), tr('Correlation Matrix'), tr('Daily Returns (window)')
+    ])
+
+    with tab_vecs:
+        st.caption(tr('Annualized statistics per asset'))
+        vecs = mean_vector.join(var_vector)
+        st.dataframe(
+            vecs.style.format({tr('Mean (annualized)'): "{:.2%}", tr('Variance (annualized)'): "{:.4%}"}),
+            use_container_width=True,
+            key=f"vecs_{'-'.join(tickers)}"
+        )
+        c1, c2 = st.columns(2)
+        with c1:
+            st.download_button(
+                label=tr('Download mean vector (CSV)'),
+                data=mean_vector.to_csv().encode('utf-8'),
+                file_name='mean_vector.csv',
+                mime='text/csv',
+                key=f"dl_mean_{'-'.join(tickers)}"
+            )
+        with c2:
+            st.download_button(
+                label=tr('Download variance vector (CSV)'),
+                data=var_vector.to_csv().encode('utf-8'),
+                file_name='variance_vector.csv',
+                mime='text/csv',
+                key=f"dl_var_{'-'.join(tickers)}"
+            )
+
+    with tab_cov:
+        st.caption(tr('Annualized variance–covariance matrix'))
+        st.dataframe(
+            cov_matrix.style.format("{:.4%}"),
+            use_container_width=True,
+            key=f"cov_df_{'-'.join(tickers)}"
+        )
+        # Heatmap for quick visual read
+        fig_cov = go.Figure(data=go.Heatmap(
+            z=cov_matrix.values, x=cov_matrix.columns, y=cov_matrix.index, coloraxis='coloraxis'
+        ))
+        fig_cov.update_layout(title=tr('Covariance heatmap'), coloraxis=dict(colorscale='RdBu', reversescale=True))
+        st.plotly_chart(fig_cov, use_container_width=True, key=f"cov_fig_{'-'.join(tickers)}")
+        st.download_button(
+            label=tr('Download covariance matrix (CSV)'),
+            data=cov_matrix.to_csv().encode('utf-8'),
+            file_name='covariance_matrix.csv',
+            mime='text/csv',
+            key=f"dl_cov_{'-'.join(tickers)}"
+        )
+
+    with tab_corr:
+        st.caption(tr('Correlation matrix (unitless)'))
+        st.dataframe(
+            corr_matrix.style.format("{:.2f}"),
+            use_container_width=True,
+            key=f"corr_df_{'-'.join(tickers)}"
+        )
+        fig_corr = go.Figure(data=go.Heatmap(
+            z=corr_matrix.values, x=corr_matrix.columns, y=corr_matrix.index, zmin=-1, zmax=1, colorscale='RdBu'
+        ))
+        fig_corr.update_layout(title=tr('Correlation heatmap'))
+        st.plotly_chart(fig_corr, use_container_width=True, key=f"corr_fig_{'-'.join(tickers)}")
+        st.download_button(
+            label=tr('Download correlation matrix (CSV)'),
+            data=corr_matrix.to_csv().encode('utf-8'),
+            file_name='correlation_matrix.csv',
+            mime='text/csv',
+            key=f"dl_corr_{'-'.join(tickers)}"
+        )
+
+    with tab_ret:
+        st.caption(tr('Daily returns used in this analysis'))
+        st.dataframe(
+            returns.style.format("{:.2%}"),
+            use_container_width=True,
+            key=f"ret_df_{'-'.join(tickers)}"
+        )
+        st.download_button(
+            label=tr('Download daily returns (CSV)'),
+            data=returns.to_csv().encode('utf-8'),
+            file_name='daily_returns.csv',
+            mime='text/csv',
+            key=f"dl_ret_{'-'.join(tickers)}"
+        )
+
+
 elif selected == tr('Sector Treemap'):
     import pandas as pd
     import streamlit as st
